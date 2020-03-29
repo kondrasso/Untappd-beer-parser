@@ -9,6 +9,8 @@ from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.by import By
+
+
 # from tqdm import tqdm
 # import random
 
@@ -43,9 +45,12 @@ class ButtonPresser(object):
             sleep(1)
             self.drv.execute_script("window.scrollTo(0,Math.max(document.documentElement."
                                     "scrollHeight,document.body.scrollHeight,document.documentElement.clientHeight));")
+            self.buttons = self.drv.find_elements_by_xpath('//*[contains(text(),"{}")]'.format(self.button_text))
             try:
                 self.buttons = self.drv.find_elements_by_xpath('//*[contains(text(),"{}")]'.format(self.button_text))
             except common.exceptions.NoSuchElementException:
+                self.buttons_left = False
+            if len(self.buttons) == 0:
                 self.buttons_left = False
             for self.button in self.buttons:
                 sleep(self.sleep_time)
@@ -266,6 +271,7 @@ class BeerStats(object):
     """
     TODO
     """
+
     def __init__(self, driver, beer_link_list, to_df=False, to_csv=False):
         self.drv = driver
         self.beer_link_list = beer_link_list
@@ -333,50 +339,44 @@ class BarsMenu(object):
                     self.current_draft = self.select_options[menu_options].text
                     self.select.select_by_index(menu_options)
                     ButtonPresser(self.drv, 'Show More Beers').press_all_buttons()
-                    self.menu_info_extraction(self.drv.find_elements_by_xpath('//*[contains(@class, "menu-section")]'))
+                    self.menu_info_extraction(
+                        self.drv.find_element_by_class_name('menu-area').find_element_by_class_name('section-area')
+                    )
+                    self.select = Select(self.drv.find_element_by_xpath('//*[contains(@class,"menu-selector")]'))
             except common.exceptions.NoSuchElementException:
                 ButtonPresser(self.drv, 'Show More Beers').press_all_buttons()
-                self.draft = 'Not_stated'
-                self.menu_info_extraction(self.drv.find_elements_by_xpath('//*[contains(@class, "menu-section")]'))
+                self.current_draft = 'Not_stated'
+                self.menu_info_extraction(
+                    self.drv.find_element_by_class_name('menu-area').find_element_by_class_name('section-area')
+                )
         except common.exceptions.TimeoutException:
             pass
         return self
 
     def menu_info_extraction(self, menu):
-        for item in menu:
-            for element in item.find_elements_by_class_name('menu-section-list'):
-                # print(_.find_element_by_tag_name('h5').find_element_by_tag_name('a').text)
-                self.menu_section = element.get_attribute('h4')
-                self.menu_elements = element.find_elements_by_tag_name('li')
+        for menu_section in menu.find_elements_by_class_name('menu-section-list'):
+            for element in menu_section.find_elements_by_tag_name('li'):
                 self.bar_name.append(self.current_bar_name)
-                self.name.append(element.find_element_by_tag_name('h5').find_element_by_tag_name('a').text),
-                self.beer_link.append(element.find_element_by_tag_name('h5').find_element_by_tag_name(
-                    'a').get_attribute('href')),
-                self.beer_sort.append(element.find_element_by_tag_name('h5').find_element_by_tag_name('em').text),
+                self.name.append(element.find_element_by_tag_name('h5').find_element_by_tag_name('a').text)
+                self.beer_link.append(
+                    element.find_element_by_tag_name('h5').find_element_by_tag_name('a').get_attribute('href')
+                )
+                self.beer_sort.append(element.find_element_by_tag_name('h5').find_element_by_tag_name('em').text)
                 self.abv.append(
-                    element.find_element_by_tag_name('h6').find_element_by_tag_name('span').text.split('•')[:-1]),
+                    element.find_element_by_tag_name('h6').find_element_by_tag_name('span').text.split('•')[0])
                 self.ibu.append(
-                    element.find_element_by_tag_name('h6').find_element_by_tag_name('span').text.split('•')[:-2])
-                self.brewery_link.append(element.find_element_by_tag_name('h6').find_element_by_tag_name(
-                    'a').get_attribute('href')),
-                self.beer_rating.append(element.find_element_by_tag_name('h6').find_element_by_tag_name(
-                    'div').get_attribute('data-rating')),
-                self.section.append(self.menu_section),
-                self.name.append(self.current_draft)
-                # for element in _:
-                #     self.bar_name.append(self.current_bar_name)
-                #     self.name.append(element.find_element_by_tag_name('h5').find_element_by_tag_name('a').text),
-                #     self.beer_link.append(element.find_element_by_tag_name('h5').find_element_by_tag_name(
-                #         'a').get_attribute('href')),
-                #     self.beer_sort.append(element.find_element_by_tag_name('h5').find_element_by_tag_name('em').text),
-                #     self.abv.append(element.find_element_by_tag_name('h6').find_element_by_tag_name('span').text.split('•')[:-1]),
-                #     self.ibu.append(element.find_element_by_tag_name('h6').find_element_by_tag_name('span').text.split('•')[:-2])
-                #     self.brewery_link.append(element.find_element_by_tag_name('h6').find_element_by_tag_name(
-                #         'a').get_attribute('href')),
-                #     self.beer_rating.append(element.find_element_by_tag_name('h6').find_element_by_tag_name(
-                #         'div').get_attribute('data-rating')),
-                #     self.section.append(self.menu_section),
-                #     self.name.append(self.current_draft)
+                    element.find_element_by_tag_name('h6').find_element_by_tag_name('span').text.split('•')[1])
+                self.brewery.append(
+                    element.find_element_by_tag_name('h6').find_element_by_tag_name('span').text.split('•')[2]
+                )
+                self.brewery_link.append(
+                    element.find_element_by_tag_name('h6').find_element_by_tag_name('a').get_attribute('href')
+                )
+                self.beer_rating.append(
+                    element.find_element_by_tag_name('h6').find_element_by_tag_name('div').get_attribute('data-rating')
+                )
+                self.section.append(element.get_attribute('h4'))
+                self.draft.append(self.current_draft)
         return self
 
     def parse_bars_menu(self):
@@ -400,5 +400,5 @@ if __name__ == '__main__':
     selenium_driver = webdriver.Chrome(options=options, executable_path=r'C:\Users\steel\Desktop\chromedriver.exe')
     log_pass_file = os.path.join(os.getcwd(), 'log_pass')
     pub_list = ["https://untappd.com/user/kondrasso/lists/675857"]
-    b_m = BarsMenu(selenium_driver, ['https://untappd.com/v/redrum-bar/2498830'], to_df=True).parse_bars_menu()
+    b_m = BarsMenu(selenium_driver, ['https://untappd.com/v/socle-craft-bar/8750585'], to_df=True).parse_bars_menu()
     print(b_m.df)
