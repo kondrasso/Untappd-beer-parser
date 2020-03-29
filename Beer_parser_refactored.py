@@ -1,7 +1,6 @@
 import os
 import json
 import pandas as pd
-import random
 from time import sleep
 from selenium import common
 from selenium import webdriver
@@ -10,6 +9,8 @@ from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.by import By
+
+
 # from tqdm import tqdm
 # import random
 
@@ -111,7 +112,6 @@ class LoginProcess(object):
         """
         self.facebook_log_in()
         self.untappd_log_in()
-        return None
 
 
 class BarsGeneralData(object):
@@ -138,9 +138,6 @@ class BarsGeneralData(object):
                              get_attribute('href'))
             self.type_of_bar.append(self.bar.find_element_by_tag_name('h4').text)
             self.address.append(self.bar.find_element_by_tag_name('h3').text)
-        return self
-
-    def to_df_or_csv(self):
         if self.to_df:
             self.bars_df = pd.DataFrame(list(zip(self.name, self.link, self.type_of_bar, self.address)),
                                         columns=self.columns)
@@ -186,10 +183,6 @@ class BarsPatrons(object):
     def patrons_all_venues(self):
         for link in self.bar_link_list:
             self.patron_extraction(link)
-        self.to_df_or_csv()
-        return self
-
-    def to_df_or_csv(self):
         if self.to_df:
             self.patrons_df = pd.DataFrame(list(zip(self.bar_name, self.bar_link, self.patron_name,
                                                     self.patron_link, self.chekin_num)), columns=self.columns)
@@ -198,7 +191,7 @@ class BarsPatrons(object):
         return self
 
 
-class PatronChekinParser(object):
+class PatronInfo(object):
     """
     TODO
     """
@@ -265,27 +258,12 @@ class PatronChekinParser(object):
     def patrons_all_info(self):
         for patron in self.patron_link_list:
             self.patron_activity_extraction(patron)
-        self.to_df_or_csv()
-        return self
-
-    def to_df_or_csv(self):
-        print(len(self.user_text), len(self.beer_text), len(self.brewery_text), len(self.rating),
-                                            len(self.bar_text), len(self.comment), len(self.serving), len(self.date),
-                                            len(self.user_link), len(self.beer_link), len(self.brewery_link),len(self.bar_link))
         if self.to_df:
             self.df = pd.DataFrame(list(zip(self.user_text, self.beer_text, self.brewery_text, self.rating,
                                             self.bar_text, self.comment, self.serving, self.date, self.user_link,
                                             self.beer_link, self.brewery_link, self.bar_link)), columns=self.columns)
             if self.to_csv:
                 self.df.to_csv()
-        return self
-
-
-class BarChekinParser(PatronChekinParser):
-    def parse_bar_chekin(self):
-        for bar in self.patron_link_list:
-            self.patron_activity_extraction(bar)
-        self.to_df_or_csv()
         return self
 
 
@@ -321,16 +299,13 @@ class BeerStats(object):
     def beer_all_info(self):
         for beer_link in self.beer_link_list:
             self.beer_stat(beer_link)
-        self.to_df_or_csv()
-        return self
-
-    def to_df_or_csv(self):
         if self.to_df:
             self.df = pd.DataFrame(list(zip(self.name, self.brewery, self.sort, self.abv,
                                             self.ibu, self.global_rating, self.num_of_ratings)),
                                    columns=self.columns)
             if self.to_csv:
                 self.df.to_csv()
+
         return self
 
 
@@ -346,31 +321,36 @@ class BarsMenu(object):
         self.bar_name, self.name, self.beer_link, self.beer_sort, self.abv, self.ibu = [], [], [], [], [], []
         self.brewery, self.brewery_link, self.beer_rating, self.section, self.draft = [], [], [], [], []
         self.current_bar_name, self.current_draft, self.menu_elements, self.menu_section = None, None, None, None
-        self.select, self.select_text_options, self.select_options = None, None, None
+        self.select = None
+        self.select_options = None
 
     def parse_bar_beer_menu(self, url):
         self.drv.get(url)
         self.current_bar_name = self.drv.find_element_by_xpath('//*[contains(@class, "venue-name")]'
                                                                ).find_element_by_tag_name('h1').text
         try:
-            self.select = Select(self.drv.find_element_by_xpath('//*[contains(@class,"menu-selector")]'))
-            self.select_options = self.select.options
-            self.select_text_options = [_.text for _ in self.select_options]
-            for menu_options in range(len(self.select_options)):
+            WebDriverWait(self.drv, 5).until(ec.element_to_be_clickable((By.XPATH,
+                                                                         '//*[contains(text(),'
+                                                                         '"Show More Beers")]')))
+            try:
                 self.select = Select(self.drv.find_element_by_xpath('//*[contains(@class,"menu-selector")]'))
-                self.current_draft = self.select_text_options[menu_options]
-                self.select.select_by_index(menu_options)
+                self.select_options = self.select.options
+                for menu_options in range(len(self.select_options)):
+                    self.current_draft = self.select_options[menu_options].text
+                    self.select.select_by_index(menu_options)
+                    ButtonPresser(self.drv, 'Show More Beers').press_all_buttons()
+                    self.menu_info_extraction(
+                        self.drv.find_element_by_class_name('menu-area').find_element_by_class_name('section-area')
+                    )
+                    self.select = Select(self.drv.find_element_by_xpath('//*[contains(@class,"menu-selector")]'))
+            except common.exceptions.NoSuchElementException:
                 ButtonPresser(self.drv, 'Show More Beers').press_all_buttons()
+                self.current_draft = 'Not_stated'
                 self.menu_info_extraction(
                     self.drv.find_element_by_class_name('menu-area').find_element_by_class_name('section-area')
                 )
-        except common.exceptions.NoSuchElementException:
-            ButtonPresser(self.drv, 'Show More Beers').press_all_buttons()
-            self.current_draft = 'Not_stated'
-            self.menu_info_extraction(
-                self.drv.find_element_by_class_name('menu-area').find_element_by_class_name('section-area')
-            )
-
+        except common.exceptions.TimeoutException:
+            pass
         return self
 
     def menu_info_extraction(self, menu):
@@ -389,33 +369,19 @@ class BarsMenu(object):
                 self.brewery.append(
                     element.find_element_by_tag_name('h6').find_element_by_tag_name('span').text.split('•')[2]
                 )
-                try:
-                    self.brewery_link.append(
-                        element.find_element_by_tag_name('h6').find_element_by_tag_name('a').get_attribute('href')
-                    )
-                except common.exceptions.NoSuchElementException:
-                    self.brewery_link.append(None)
-                try:
-                    self.beer_rating.append(
-                        element.find_element_by_tag_name('h6').find_element_by_tag_name('div').get_attribute(
-                                                                                                'data-rating')
-                    )
-                except common.exceptions.NoSuchElementException:
-                    self.beer_rating.append(0)
-                try:
-                    self.section.append(element.get_attribute('h4'))
-                except common.exceptions.NoSuchElementException:
-                    self.section.append('Not stated')
+                self.brewery_link.append(
+                    element.find_element_by_tag_name('h6').find_element_by_tag_name('a').get_attribute('href')
+                )
+                self.beer_rating.append(
+                    element.find_element_by_tag_name('h6').find_element_by_tag_name('div').get_attribute('data-rating')
+                )
+                self.section.append(element.get_attribute('h4'))
                 self.draft.append(self.current_draft)
         return self
 
     def parse_bars_menu(self):
         for bar in self.bar_link_list:
             self.parse_bar_beer_menu(bar)
-            self.to_df_or_csv()
-        return self
-
-    def to_df_or_csv(self):
         if self.to_df:
             self.df = pd.DataFrame(list(zip(self.bar_name, self.name, self.beer_link, self.beer_sort,
                                             self.abv, self.ibu, self.brewery, self.brewery_link,
@@ -434,8 +400,5 @@ if __name__ == '__main__':
     selenium_driver = webdriver.Chrome(options=options, executable_path=r'C:\Users\steel\Desktop\chromedriver.exe')
     log_pass_file = os.path.join(os.getcwd(), 'log_pass')
     pub_list = ["https://untappd.com/user/kondrasso/lists/675857"]
-    # b_m = BarsMenu(selenium_driver, ['https://untappd.com/v/redrum-bar/2498830','https://untappd.com/v/socle-craft-bar/8750585'], to_df=True).parse_bars_menu()
-    # print(b_m.df)
-    # LoginProcess(selenium_driver, os.path.join(os.getcwd(), 'log_pass')).log_in()
-    # b_p = BarChekinParser(selenium_driver,['https://untappd.com/v/redrum-bar/2498830/activity','https://untappd.com/v/socle-craft-bar/8750585/activity'],to_df=True).parse_bar_chekin()
-    # print(b_p.df)
+    b_m = BarsMenu(selenium_driver, ['https://untappd.com/v/socle-craft-bar/8750585'], to_df=True).parse_bars_menu()
+    print(b_m.df)
