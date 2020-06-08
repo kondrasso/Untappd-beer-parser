@@ -19,10 +19,18 @@ from selenium.webdriver.common.by import By
 
 class ButtonPresser(object):
     """
-    
-    """
 
+    """
     def __init__(self, driver, button_text='Show More Beers', sleep_time=1):
+        """
+
+        Parameters
+        ----------
+        driver :
+        button_text :
+        sleep_time :
+
+        """
         self.drv = driver
         self.button_text = button_text
         self.sleep_time = sleep_time
@@ -31,6 +39,12 @@ class ButtonPresser(object):
         self.buttons = None
 
     def banner_cutter(self):
+        """
+
+        Returns
+        -------
+
+        """
         try:
             self.banner = self.drv.find_element_by_xpath(
                 '//*[contains(@class, "branch-animation")]'
@@ -48,6 +62,12 @@ class ButtonPresser(object):
         return None
 
     def press_all_buttons(self):
+        """
+
+        Returns
+        -------
+
+        """
         sleep(5)
         while self.buttons_left:
             self.banner_cutter()
@@ -114,10 +134,17 @@ class LoginProcess(object):
 
     def __init__(self, driver, userdata_path, sleep_time=1):
         """
+
         Grabbing login and password from external file,
         starting selenium web session
-        """
 
+        Parameters
+        ----------
+        driver :
+        userdata_path :
+        sleep_time :
+
+        """
         with open(userdata_path) as f:
             user_data = json.load(f)
 
@@ -127,6 +154,12 @@ class LoginProcess(object):
         self.sleep_time = sleep_time
 
     def facebook_log_in(self):
+        """
+
+        Returns
+        -------
+
+        """
         self.drv.get('https://www.facebook.com/')
         sleep(self.sleep_time)
 
@@ -149,6 +182,12 @@ class LoginProcess(object):
             self.drv.find_element_by_name('login').click()
 
     def untappd_log_in(self):
+        """
+
+        Returns
+        -------
+
+        """
         sleep(self.sleep_time)
         self.drv.get("https://untappd.com")
         self.drv.find_element_by_xpath('//*[contains(text(),"Sign")]').click()
@@ -162,6 +201,9 @@ class LoginProcess(object):
         """
         Consequently login into facebook and untappd,
         last one does not require login and password due to using fb account as means to log in
+        Returns
+        -------
+
         """
         self.facebook_log_in()
         self.untappd_log_in()
@@ -173,6 +215,16 @@ class BarsGeneralData(object):
     """
 
     def __init__(self, driver, bar_list_link, to_df=False, to_csv=False):
+        """
+
+        Parameters
+        ----------
+        driver :
+        bar_list_link :
+        to_df :
+        to_csv :
+
+        """
         self.drv = driver
         self.bar_list = self.drv.get(bar_list_link)
         self.to_df = to_df
@@ -188,6 +240,12 @@ class BarsGeneralData(object):
         self.bars_df = None
 
     def bars_info_extraction(self):
+        """
+
+        Returns
+        -------
+
+        """
         ButtonPresser(self.drv, button_text='Show More').press_all_buttons()
         self.bars =\
             self.drv.find_elements_by_css_selector(
@@ -221,6 +279,12 @@ class BarsGeneralData(object):
         return self
 
     def to_df_or_csv(self):
+        """
+
+        Returns
+        -------
+
+        """
         if self.to_df:
             self.bars_df = pd.DataFrame(list(zip(
                 self.name,
@@ -239,6 +303,16 @@ class BarsPatrons(object):
     """
 
     def __init__(self, driver, bar_link_list, to_df=False, to_csv=False):
+        """
+
+        Parameters
+        ----------
+        driver :
+        bar_link_list :
+        to_df :
+        to_csv :
+
+        """
         self.drv = driver
         self.bar_link_list = bar_link_list
         self.to_df = to_df
@@ -256,6 +330,16 @@ class BarsPatrons(object):
         self.patrons_df = None
 
     def patron_extraction(self, bar_link):
+        """
+
+        Parameters
+        ----------
+        bar_link :
+
+        Returns
+        -------
+
+        """
         self.drv.get(bar_link)
         self.current_bar_name = \
             self.drv.find_element_by_xpath(
@@ -295,12 +379,24 @@ class BarsPatrons(object):
         return self
 
     def patrons_all_venues(self):
+        """
+
+        Returns
+        -------
+
+        """
         for link in self.bar_link_list:
             self.patron_extraction(link)
         self.to_df_or_csv()
         return self
 
     def to_df_or_csv(self):
+        """
+
+        Returns
+        -------
+
+        """
         if self.to_df:
             self.patrons_df = pd.DataFrame(list(zip(
                 self.bar_name,
@@ -320,6 +416,16 @@ class PatronChekinParser(object):
     """
 
     def __init__(self, driver, patron_link_list, to_df=False, to_csv=False):
+        """
+
+        Parameters
+        ----------
+        driver :
+        patron_link_list :
+        to_df :
+        to_csv :
+
+        """
         self.drv = driver
         self.patron_link_list = patron_link_list
         self.user_data = None
@@ -346,6 +452,16 @@ class PatronChekinParser(object):
         self.user, self.beer, self.brewery, self.bar = None, None, None, None
 
     def patron_activity_extraction(self, patron):
+        """
+
+        Parameters
+        ----------
+        patron :
+
+        Returns
+        -------
+
+        """
         self.drv.get(patron)
         ButtonPresser(self.drv, 'Show More').press_all_buttons()
         self.user_data = \
@@ -449,12 +565,24 @@ class PatronChekinParser(object):
         return self
 
     def patrons_all_info(self):
+        """
+
+        Returns
+        -------
+
+        """
         for patron in self.patron_link_list:
             self.patron_activity_extraction(patron)
         self.to_df_or_csv()
         return self
 
     def to_df_or_csv(self):
+        """
+
+        Returns
+        -------
+
+        """
         if self.to_df:
             self.df = pd.DataFrame(list(zip(
                 self.user_text,
@@ -476,7 +604,16 @@ class PatronChekinParser(object):
 
 
 class BarChekinParser(PatronChekinParser):
+    """
+
+    """
     def parse_bar_chekin(self):
+        """
+
+        Returns
+        -------
+
+        """
         for bar in self.patron_link_list:
             self.patron_activity_extraction(bar)
         self.to_df_or_csv()
@@ -489,6 +626,15 @@ class BeerStats(object):
     """
 
     def __init__(self, driver, beer_link_list, to_df=False, to_csv=False):
+        """
+
+        Parameters
+        ----------
+        driver :
+        beer_link_list :
+        to_df :
+        to_csv :
+        """
         self.drv = driver
         self.beer_link_list = beer_link_list
         self.to_df = to_df
@@ -508,6 +654,16 @@ class BeerStats(object):
         self.details = None
 
     def beer_stat(self, url):
+        """
+
+        Parameters
+        ----------
+        url :
+
+        Returns
+        -------
+
+        """
         self.drv.get(url)
         self.name.append(
             self.drv.find_element_by_class_name(
@@ -555,12 +711,24 @@ class BeerStats(object):
         return self
 
     def beer_all_info(self):
+        """
+
+        Returns
+        -------
+
+        """
         for beer_link in self.beer_link_list:
             self.beer_stat(beer_link)
         self.to_df_or_csv()
         return self
 
     def to_df_or_csv(self):
+        """
+
+        Returns
+        -------
+
+        """
         if self.to_df:
             self.df = pd.DataFrame(list(zip(
                 self.name,
@@ -579,6 +747,16 @@ class BeerStats(object):
 
 class BarsMenu(object):
     def __init__(self, driver, bar_link_list, to_df=False, to_csv=False):
+        """
+
+        Parameters
+        ----------
+        driver :
+        bar_link_list :
+        to_df :
+        to_csv :
+
+        """
         self.drv = driver
         self.bar_link_list = bar_link_list
         self.to_df = to_df
@@ -603,6 +781,16 @@ class BarsMenu(object):
         self.select, self.select_text_options, self.select_options = None, None, None
 
     def parse_bar_beer_menu(self, url):
+        """
+
+        Parameters
+        ----------
+        url :
+
+        Returns
+        -------
+
+        """
         self.drv.get(url)
         self.current_bar_name = \
             self.drv.find_element_by_xpath(
@@ -651,7 +839,16 @@ class BarsMenu(object):
         return self
 
     def menu_info_extraction(self, menu):
+        """
 
+        Parameters
+        ----------
+        menu :
+
+        Returns
+        -------
+
+        """
         for menu_section in menu.find_elements_by_class_name('menu-section-list'):
             for element in menu_section.find_elements_by_tag_name('li'):
                 self.bar_name.append(self.current_bar_name)
@@ -731,12 +928,24 @@ class BarsMenu(object):
         return self
 
     def parse_bars_menu(self):
+        """
+
+        Returns
+        -------
+
+        """
         for bar in self.bar_link_list:
             self.parse_bar_beer_menu(bar)
             self.to_df_or_csv
         return self
 
     def to_df_or_csv(self):
+        """
+
+        Returns
+        -------
+
+        """
         if self.to_df:
             self.df = pd.DataFrame(list(zip(
                 self.bar_name,
