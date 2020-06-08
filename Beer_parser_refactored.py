@@ -1,9 +1,7 @@
 import os
 import json
 import pandas as pd
-import random
 from time import sleep
-from time import time
 from selenium import common
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -13,24 +11,24 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.by import By
 
 
-# from tqdm import tqdm
-# import random
-
-
 class ButtonPresser(object):
     """
+    Class that contains method's to continuously press buttons
+    because of ajax nature of the site
 
+    Arguments
+    ----------
+    driver : SeleniumWebDriver
+        Selenium web driver, that's contains current session.
+    button_text : str
+        Text that contains button to press.
+    sleep_time : int
+        Time to wait between various stages of webpage's loading.
+        Used due to unstable nature of WebDiverWait while handling
+        infinitely long pages.
     """
+
     def __init__(self, driver, button_text='Show More Beers', sleep_time=1):
-        """
-
-        Parameters
-        ----------
-        driver :
-        button_text :
-        sleep_time :
-
-        """
         self.drv = driver
         self.button_text = button_text
         self.sleep_time = sleep_time
@@ -40,15 +38,18 @@ class ButtonPresser(object):
 
     def banner_cutter(self):
         """
+        Method used to execute javascript code to remove banner obstructing the DOM.
 
         Returns
         -------
-
+        None
         """
+
         try:
             self.banner = self.drv.find_element_by_xpath(
                 '//*[contains(@class, "branch-animation")]'
             )
+            # script to remove banner
             self.drv.execute_script(
                 "arguments[0].style.visibility='hidden'",
                 self.banner
@@ -63,15 +64,18 @@ class ButtonPresser(object):
 
     def press_all_buttons(self):
         """
+        Method that continuously presses all appearing buttons while they can be located
 
         Returns
         -------
-
+        None
         """
+
         sleep(5)
         while self.buttons_left:
             self.banner_cutter()
             sleep(1)
+            # script to scroll to the bottom of the page
             self.drv.execute_script(
                 "window.scrollTo(0,Math.max(document.documentElement."
                 "scrollHeight,document.body.scrollHeight,document."
@@ -97,6 +101,7 @@ class ButtonPresser(object):
 
             for self.button in self.buttons:
                 sleep(self.sleep_time)
+                # script to scroll to the bottom of the page
                 self.drv.execute_script(
                     "window.scrollTo(0,Math.max(document.documentElement."
                     "scrollHeight,document.body.scrollHeight,document."
@@ -129,22 +134,20 @@ class ButtonPresser(object):
 
 class LoginProcess(object):
     """
-    Login to facebook & untappd for acquiring access to data from website via Selenium webdriver
+    Login to facebook & untappd for acquiring access
+    to data from website via Selenium webdriver
+
+    Arguments
+    ----------
+    driver : SeleniumWebDriver
+        Selenium web driver, that's contains current session.
+    userdata_path : str
+        Path to JSON file that contains fb login information.
+    sleep_time : int
+        Time to wait between various actions.
     """
 
     def __init__(self, driver, userdata_path, sleep_time=1):
-        """
-
-        Grabbing login and password from external file,
-        starting selenium web session
-
-        Parameters
-        ----------
-        driver :
-        userdata_path :
-        sleep_time :
-
-        """
         with open(userdata_path) as f:
             user_data = json.load(f)
 
@@ -155,11 +158,13 @@ class LoginProcess(object):
 
     def facebook_log_in(self):
         """
+        Logging in to Facebook account via their homepage.
 
         Returns
         -------
-
+        None
         """
+
         self.drv.get('https://www.facebook.com/')
         sleep(self.sleep_time)
 
@@ -183,14 +188,18 @@ class LoginProcess(object):
 
     def untappd_log_in(self):
         """
+        Logging in to Untappd via Facebook
 
         Returns
         -------
-
+        None
         """
+
         sleep(self.sleep_time)
         self.drv.get("https://untappd.com")
-        self.drv.find_element_by_xpath('//*[contains(text(),"Sign")]').click()
+        self.drv.find_element_by_xpath(
+            '//*[contains(text(),"Sign")]'
+        ).click()
         fb_auth = self.drv.find_element_by_xpath(
             '//*[contains(@class, "button fb")]'
         )
@@ -199,32 +208,35 @@ class LoginProcess(object):
 
     def log_in(self):
         """
-        Consequently login into facebook and untappd,
-        last one does not require login and password due to using fb account as means to log in
+        Consequently login into facebook and untappd, last one does not require login and password
+        due to using fb account as means to log in.
+
         Returns
         -------
-
+        None
         """
+
         self.facebook_log_in()
         self.untappd_log_in()
 
 
 class BarsGeneralData(object):
     """
-    Getting list of bars from user's created list via link from Untappd website
+    Getting list of bars from user's created list via link from Untappd website, as well as their general data.
+
+    Arguments
+    ----------
+    driver : SeleniumWebDriver
+        Selenium web driver, that's contains current session.
+    bar_list_link : list[str]
+        List of links to existing list of bars via Untappd lists in user profile.
+    to_df : bool
+        Save results as Pandas DataFrame
+    to_csv : bool
+        Import results to csv
     """
 
     def __init__(self, driver, bar_list_link, to_df=False, to_csv=False):
-        """
-
-        Parameters
-        ----------
-        driver :
-        bar_list_link :
-        to_df :
-        to_csv :
-
-        """
         self.drv = driver
         self.bar_list = self.drv.get(bar_list_link)
         self.to_df = to_df
@@ -241,11 +253,14 @@ class BarsGeneralData(object):
 
     def bars_info_extraction(self):
         """
+        Pressing all buttons on the page via ButtonPresser, then extract data into the text format,
+        updating class variables.
 
         Returns
         -------
-
+        self
         """
+
         ButtonPresser(self.drv, button_text='Show More').press_all_buttons()
         self.bars =\
             self.drv.find_elements_by_css_selector(
@@ -280,11 +295,13 @@ class BarsGeneralData(object):
 
     def to_df_or_csv(self):
         """
+        Saving results to df or/and csv
 
         Returns
         -------
-
+        self
         """
+
         if self.to_df:
             self.bars_df = pd.DataFrame(list(zip(
                 self.name,
@@ -299,20 +316,21 @@ class BarsGeneralData(object):
 
 class BarsPatrons(object):
     """
-    TODO
+    Getting info of users in "top patrons" section of bar's webpage at Untappd.
+
+    Arguments
+    ----------
+    driver : SeleniumWebDriver
+        Selenium web driver, that's contains current session.
+    bar_list_link : list[str]
+        Link to existing list of bars via Untappd lists in user profile.
+    to_df : bool
+        Save results as Pandas DataFrame
+    to_csv :
+        Import results to csv
     """
 
     def __init__(self, driver, bar_link_list, to_df=False, to_csv=False):
-        """
-
-        Parameters
-        ----------
-        driver :
-        bar_link_list :
-        to_df :
-        to_csv :
-
-        """
         self.drv = driver
         self.bar_link_list = bar_link_list
         self.to_df = to_df
@@ -331,15 +349,18 @@ class BarsPatrons(object):
 
     def patron_extraction(self, bar_link):
         """
+        Extracting all fields of user's profile page in Untappd and appending it to respected class variables.
 
         Parameters
         ----------
-        bar_link :
+        bar_link : str
+            Link to a bar's page on Untappd.
 
         Returns
         -------
-
+        self
         """
+
         self.drv.get(bar_link)
         self.current_bar_name = \
             self.drv.find_element_by_xpath(
@@ -380,11 +401,13 @@ class BarsPatrons(object):
 
     def patrons_all_venues(self):
         """
+        Extracting patrons info from all venues in bar_link_list.
 
         Returns
         -------
-
+        self
         """
+
         for link in self.bar_link_list:
             self.patron_extraction(link)
         self.to_df_or_csv()
@@ -392,11 +415,13 @@ class BarsPatrons(object):
 
     def to_df_or_csv(self):
         """
+        Saving results to df or/and csv.
 
         Returns
         -------
-
+        self
         """
+
         if self.to_df:
             self.patrons_df = pd.DataFrame(list(zip(
                 self.bar_name,
@@ -412,20 +437,21 @@ class BarsPatrons(object):
 
 class PatronChekinParser(object):
     """
-    TODO
+    Getting all available check-ins from user's profile in Untappd .
+
+    Arguments
+    ----------
+    driver : SeleniumWebDriver
+        Selenium web driver, that's contains current session.
+    patron_link_list : list[str]
+        List of links to existing list of bars via Untappd lists in user profile.
+    to_df : bool
+        Save results as Pandas DataFrame
+    to_csv : bool
+        Import results to csv
     """
 
     def __init__(self, driver, patron_link_list, to_df=False, to_csv=False):
-        """
-
-        Parameters
-        ----------
-        driver :
-        patron_link_list :
-        to_df :
-        to_csv :
-
-        """
         self.drv = driver
         self.patron_link_list = patron_link_list
         self.user_data = None
@@ -456,12 +482,14 @@ class PatronChekinParser(object):
 
         Parameters
         ----------
-        patron :
+        patron : str
+            Link to a patron's page on Untappd.
 
         Returns
         -------
-
+        self
         """
+
         self.drv.get(patron)
         ButtonPresser(self.drv, 'Show More').press_all_buttons()
         self.user_data = \
@@ -566,10 +594,11 @@ class PatronChekinParser(object):
 
     def patrons_all_info(self):
         """
+        Extracting patrons info from all patrons in patron_link_list.
 
         Returns
         -------
-
+        self
         """
         for patron in self.patron_link_list:
             self.patron_activity_extraction(patron)
@@ -578,10 +607,11 @@ class PatronChekinParser(object):
 
     def to_df_or_csv(self):
         """
+        Saving results to df or/and csv
 
         Returns
         -------
-
+        self
         """
         if self.to_df:
             self.df = pd.DataFrame(list(zip(
@@ -605,14 +635,15 @@ class PatronChekinParser(object):
 
 class BarChekinParser(PatronChekinParser):
     """
-
+    Getting all available check-ins from bar's profile in Untappd .
     """
     def parse_bar_chekin(self):
         """
+        Extracting all check-ins from bar's page on Untappd.
 
         Returns
         -------
-
+        self
         """
         for bar in self.patron_link_list:
             self.patron_activity_extraction(bar)
@@ -622,19 +653,21 @@ class BarChekinParser(PatronChekinParser):
 
 class BeerStats(object):
     """
-    TODO
+    Getting info on each beer presented by link in beer_link_list and extracting it into text data.
+
+    Arguments
+    ----------
+    driver : SeleniumWebDriver
+        Selenium web driver, that's contains current session.
+    beer_link_list : list[str]
+        List of links to beer's on Untappd.
+    to_df : bool
+        Save results as Pandas DataFrame
+    to_csv : bool
+        Import results to csv
     """
 
     def __init__(self, driver, beer_link_list, to_df=False, to_csv=False):
-        """
-
-        Parameters
-        ----------
-        driver :
-        beer_link_list :
-        to_df :
-        to_csv :
-        """
         self.drv = driver
         self.beer_link_list = beer_link_list
         self.to_df = to_df
@@ -655,14 +688,16 @@ class BeerStats(object):
 
     def beer_stat(self, url):
         """
-
+        Extracting beer's info from its webpage on Untappd and getting it into text data,
+        updating respectable class variables.
         Parameters
         ----------
-        url :
+        url : str
+            Link to a beer's webpage on Untappd.
 
         Returns
         -------
-
+        self
         """
         self.drv.get(url)
         self.name.append(
@@ -712,11 +747,13 @@ class BeerStats(object):
 
     def beer_all_info(self):
         """
+        Extracting all beer's info from beer's page on Untappd.
 
         Returns
         -------
-
+        self
         """
+
         for beer_link in self.beer_link_list:
             self.beer_stat(beer_link)
         self.to_df_or_csv()
@@ -724,11 +761,13 @@ class BeerStats(object):
 
     def to_df_or_csv(self):
         """
+        Saving results to df or/and csv
 
         Returns
         -------
-
+        self
         """
+
         if self.to_df:
             self.df = pd.DataFrame(list(zip(
                 self.name,
@@ -746,17 +785,22 @@ class BeerStats(object):
 
 
 class BarsMenu(object):
+    """
+    Getting all info from bar's webpage menu section on Untappd.
+
+    Arguments
+    ----------
+    driver : SeleniumWebDriver
+        Selenium web driver, that's contains current session.
+    bar_link_list : list[str]
+        List of links to bar's webpage on Untappd.
+    to_df : bool
+        Save results as Pandas DataFrame
+    to_csv : bool
+        Import results to csv
+    """
+
     def __init__(self, driver, bar_link_list, to_df=False, to_csv=False):
-        """
-
-        Parameters
-        ----------
-        driver :
-        bar_link_list :
-        to_df :
-        to_csv :
-
-        """
         self.drv = driver
         self.bar_link_list = bar_link_list
         self.to_df = to_df
@@ -782,15 +826,19 @@ class BarsMenu(object):
 
     def parse_bar_beer_menu(self, url):
         """
+        Cycling through all dropdown menus on bar's webpage menu section on Untappd, getting text info from it and
+        update respectable class variables.
 
         Parameters
         ----------
-        url :
+        url : str
+            Link to bar's webpage on Untappd.
 
         Returns
         -------
-
+        self
         """
+
         self.drv.get(url)
         self.current_bar_name = \
             self.drv.find_element_by_xpath(
@@ -799,6 +847,7 @@ class BarsMenu(object):
                 'h1'
             ).text
         try:
+            # trying to get list of options if there are more than one
             self.select = \
                 Select(
                     self.drv.find_element_by_xpath(
@@ -807,7 +856,7 @@ class BarsMenu(object):
                 )
             self.select_options = self.select.options
             self.select_text_options = [_.text for _ in self.select_options]
-
+            # cycling through menu options and selecting each one
             for menu_options in range(len(self.select_options)):
                 self.select = \
                     Select(
@@ -818,6 +867,7 @@ class BarsMenu(object):
                 self.current_draft = self.select_text_options[menu_options]
                 self.select.select_by_index(menu_options)
                 ButtonPresser(self.drv, 'Show More Beers').press_all_buttons()
+                # extracting current menu dropdown section
                 self.menu_info_extraction(
                     self.drv.find_element_by_class_name(
                         'menu-area'
@@ -826,6 +876,7 @@ class BarsMenu(object):
                     )
                 )
         except common.exceptions.NoSuchElementException:
+            # if only none or one options present
             ButtonPresser(self.drv, 'Show More Beers').press_all_buttons()
             self.current_draft = 'Not_stated'
             self.menu_info_extraction(
@@ -840,14 +891,16 @@ class BarsMenu(object):
 
     def menu_info_extraction(self, menu):
         """
+        Extracting info from current selected option in bar webpage menu section on Untappd and updating
+        respectable class variables.
 
         Parameters
         ----------
-        menu :
+        menu : SeleniumWebDriver.object
 
         Returns
         -------
-
+        self
         """
         for menu_section in menu.find_elements_by_class_name('menu-section-list'):
             for element in menu_section.find_elements_by_tag_name('li'):
@@ -929,11 +982,13 @@ class BarsMenu(object):
 
     def parse_bars_menu(self):
         """
+        Extracting all menus from bar's page on Untappd.
 
         Returns
         -------
-
+        self
         """
+
         for bar in self.bar_link_list:
             self.parse_bar_beer_menu(bar)
             self.to_df_or_csv
@@ -941,11 +996,13 @@ class BarsMenu(object):
 
     def to_df_or_csv(self):
         """
+        Saving results to df or/and csv
 
         Returns
         -------
-
+        self
         """
+
         if self.to_df:
             self.df = pd.DataFrame(list(zip(
                 self.bar_name,
