@@ -262,8 +262,7 @@ class BarsGeneralData(object):
         """
 
         ButtonPresser(self.drv, button_text='Show More').press_all_buttons()
-        self.bars =\
-            self.drv.find_elements_by_css_selector(
+        self.bars = self.drv.find_elements_by_css_selector(
                 "div[""class^='beer-']"
             )
         for self.bar in self.bars:
@@ -385,8 +384,7 @@ class BarsPatrons(object):
             return None
 
         for patron in self.patron_menu:
-            _ = \
-                patron.find_element_by_class_name(
+            _ = patron.find_element_by_class_name(
                     'tip.track-click'
                 ).get_attribute(
                     'title'
@@ -492,8 +490,7 @@ class PatronChekinParser(object):
 
         self.drv.get(patron)
         ButtonPresser(self.drv, 'Show More').press_all_buttons()
-        self.user_data = \
-            self.drv.find_element_by_id(
+        self.user_data = self.drv.find_element_by_id(
                 'main-stream'
             ).find_elements_by_class_name(
                 'item'
@@ -532,8 +529,7 @@ class PatronChekinParser(object):
             except common.exceptions.NoSuchElementException:
                 self.comment.append('empty')
             try:
-                self.user, self.beer, self.brewery, self.bar = \
-                    _.find_element_by_class_name(
+                self.user, self.beer, self.brewery, self.bar = _.find_element_by_class_name(
                         'text'
                     ).find_elements_by_tag_name(
                         'a'
@@ -600,6 +596,7 @@ class PatronChekinParser(object):
         -------
         self
         """
+
         for patron in self.patron_link_list:
             self.patron_activity_extraction(patron)
         self.to_df_or_csv()
@@ -613,6 +610,7 @@ class PatronChekinParser(object):
         -------
         self
         """
+
         if self.to_df:
             self.df = pd.DataFrame(list(zip(
                 self.user_text,
@@ -637,6 +635,7 @@ class BarChekinParser(PatronChekinParser):
     """
     Getting all available check-ins from bar's profile in Untappd .
     """
+
     def parse_bar_chekin(self):
         """
         Extracting all check-ins from bar's page on Untappd.
@@ -645,6 +644,7 @@ class BarChekinParser(PatronChekinParser):
         -------
         self
         """
+
         for bar in self.patron_link_list:
             self.patron_activity_extraction(bar)
         self.to_df_or_csv()
@@ -699,6 +699,7 @@ class BeerStats(object):
         -------
         self
         """
+
         self.drv.get(url)
         self.name.append(
             self.drv.find_element_by_class_name(
@@ -902,6 +903,7 @@ class BarsMenu(object):
         -------
         self
         """
+
         for menu_section in menu.find_elements_by_class_name('menu-section-list'):
             for element in menu_section.find_elements_by_tag_name('li'):
                 self.bar_name.append(self.current_bar_name)
