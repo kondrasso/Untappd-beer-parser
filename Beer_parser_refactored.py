@@ -1,14 +1,15 @@
-import os
 import json
 import pandas as pd
 from time import sleep
+from tqdm.auto import tqdm
 from selenium import common
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.common.by import By
 
 
 class ButtonPresser(object):
@@ -35,6 +36,7 @@ class ButtonPresser(object):
         self.buttons_left = True
         self.banner = None
         self.buttons = None
+        self.button = None
 
     def banner_cutter(self):
         """
@@ -248,8 +250,7 @@ class BarsGeneralData(object):
             'address'
         ]
         self.name, self.link, self.type_of_bar, self.address = [], [], [], []
-        self.bars = None
-        self.bars_df = None
+        self.bars, self.bars_df, self.bar = None, None, None
 
     def bars_info_extraction(self):
         """
@@ -406,7 +407,7 @@ class BarsPatrons(object):
         self
         """
 
-        for link in self.bar_link_list:
+        for link in tqdm(self.bar_link_list):
             self.patron_extraction(link)
         self.to_df_or_csv()
         return self
@@ -597,7 +598,7 @@ class PatronChekinParser(object):
         self
         """
 
-        for patron in self.patron_link_list:
+        for patron in tqdm(self.patron_link_list):
             self.patron_activity_extraction(patron)
         self.to_df_or_csv()
         return self
@@ -645,7 +646,7 @@ class BarChekinParser(PatronChekinParser):
         self
         """
 
-        for bar in self.patron_link_list:
+        for bar in tqdm(self.patron_link_list):
             self.patron_activity_extraction(bar)
         self.to_df_or_csv()
         return self
@@ -755,7 +756,7 @@ class BeerStats(object):
         self
         """
 
-        for beer_link in self.beer_link_list:
+        for beer_link in tqdm(self.beer_link_list):
             self.beer_stat(beer_link)
         self.to_df_or_csv()
         return self
@@ -991,9 +992,9 @@ class BarsMenu(object):
         self
         """
 
-        for bar in self.bar_link_list:
+        for bar in tqdm(self.bar_link_list):
             self.parse_bar_beer_menu(bar)
-            self.to_df_or_csv
+            self.to_df_or_csv()
         return self
 
     def to_df_or_csv(self):
@@ -1025,16 +1026,43 @@ class BarsMenu(object):
         return self
 
 
+class DriverSetup(object):
+    def __init__(self, window_size="--window-size=1920x1080", headless=True, logging=True):
+        """
+
+        Parameters
+        ----------
+        driver_path :
+        window_size :
+        headless :
+        logging :
+        """
+        self.options = Options()
+        self.options.add_argument(window_size)
+        if logging:
+            self.options.add_experimental_option(
+                'excludeSwitches',
+                ['enable-logging']
+            )
+        if headless:
+            self.options.add_argument("--headless")
+        self.selenium_driver = webdriver.Chrome(
+            ChromeDriverManager().install(),
+            options=self.options,
+            # r'C:\Users\steel\Desktop\chromedriver.exe'
+        )
+
+
 if __name__ == '__main__':
-    options = Options()
-    options.add_argument("--window-size=1920x1080")
-    # options.add_argument("--headless")
-    options.add_experimental_option('excludeSwitches', ['enable-logging'])
-    selenium_driver = webdriver.Chrome(options=options, executable_path=r'C:\Users\steel\Desktop\chromedriver.exe')
-    log_pass_file = os.path.join(os.getcwd(), 'log_pass')
+
     pub_list = ["https://untappd.com/user/kondrasso/lists/675857"]
     # b_m = BarsMenu(selenium_driver, ['https://untappd.com/v/redrum-bar/2498830','https://untappd.com/v/socle-craft-bar/8750585'], to_df=True).parse_bars_menu()
     # print(b_m.df)
     # LoginProcess(selenium_driver, os.path.join(os.getcwd(), 'log_pass')).log_in()
     # b_p = BarChekinParser(selenium_driver,['https://untappd.com/v/redrum-bar/2498830/activity','https://untappd.com/v/socle-craft-bar/8750585/activity'],to_df=True).parse_bar_chekin()
     # print(b_p.df)
+    # TODO convert to property? all internal methods
+    # TODO to test file
+    # drv = DriverSetup(headless=False).selenium_driver
+    # b_m = BarsMenu(drv, ['https://untappd.com/v/redrum-bar/2498830', 'https://untappd.com/v/socle-craft-bar/8750585'],to_df=True).parse_bars_menu()
+
