@@ -1,3 +1,4 @@
 /log_pass
 /geopy
 /.deepsource.toml.txt
+/source/__pycache__
