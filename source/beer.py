@@ -12,7 +12,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support import expected_conditions as ec
 
 
-class ButtonPresser(object):
+class ButtonPresser:
     """
     Class that contains method's to continuously press buttons
     because of ajax nature of the site
@@ -59,9 +59,8 @@ class ButtonPresser(object):
             sleep(self.sleep_time)
         except (
                 common.exceptions.NoSuchElementException,
-                common.exceptions.ElementNotInteractableException
         ):
-            pass
+            print('No banner found')
         return None
 
     def press_all_buttons(self):
@@ -134,7 +133,7 @@ class ButtonPresser(object):
                     self.buttons_left = False
 
 
-class LoginProcess(object):
+class LoginProcess:
     """
     Login to facebook & untappd for acquiring access
     to data from website via Selenium webdriver
@@ -222,7 +221,7 @@ class LoginProcess(object):
         self.untappd_log_in()
 
 
-class BarsGeneralData(object):
+class BarsGeneralData:
     """
     Getting list of bars from user's created list via link from Untappd website, as well as their general data.
 
@@ -314,7 +313,7 @@ class BarsGeneralData(object):
         return self
 
 
-class BarsPatrons(object):
+class BarsPatrons:
     """
     Getting info of users in "top patrons" section of bar's webpage at Untappd.
 
@@ -434,7 +433,7 @@ class BarsPatrons(object):
         return self
 
 
-class PatronChekinParser(object):
+class PatronChekinParser:
     """
     Getting all available check-ins from user's profile in Untappd .
 
@@ -652,7 +651,7 @@ class BarChekinParser(PatronChekinParser):
         return self
 
 
-class BeerStats(object):
+class BeerStats:
     """
     Getting info on each beer presented by link in beer_link_list and extracting it into text data.
 
@@ -786,7 +785,7 @@ class BeerStats(object):
         return self
 
 
-class BarsMenu(object):
+class BarsMenu:
     """
     Getting all info from bar's webpage menu section on Untappd.
 
@@ -898,7 +897,7 @@ class BarsMenu(object):
 
         Parameters
         ----------
-        menu : SeleniumWebDriver.object
+        menu : SeleniumWebDriver
 
         Returns
         -------
@@ -1026,16 +1025,19 @@ class BarsMenu(object):
         return self
 
 
-class DriverSetup(object):
+class DriverSetup:
     def __init__(self, window_size="--window-size=1920x1080", headless=True, logging=True):
         """
 
         Parameters
         ----------
-        driver_path :
-        window_size :
-        headless :
-        logging :
+        window_size : str
+            Parameter for selenium options, describing window size. Note: full hd is recommended due to visibility
+            issues with lesser resolution
+        headless : bool
+            Option for headless usage of webdriver
+        logging : bool
+            Option for built-in selenium logger
         """
         self.options = Options()
         self.options.add_argument(window_size)
@@ -1048,21 +1050,5 @@ class DriverSetup(object):
             self.options.add_argument("--headless")
         self.selenium_driver = webdriver.Chrome(
             ChromeDriverManager().install(),
-            options=self.options,
-            # r'C:\Users\steel\Desktop\chromedriver.exe'
+            options=self.options
         )
-
-
-if __name__ == '__main__':
-
-    pub_list = ["https://untappd.com/user/kondrasso/lists/675857"]
-    # b_m = BarsMenu(selenium_driver, ['https://untappd.com/v/redrum-bar/2498830','https://untappd.com/v/socle-craft-bar/8750585'], to_df=True).parse_bars_menu()
-    # print(b_m.df)
-    # LoginProcess(selenium_driver, os.path.join(os.getcwd(), 'log_pass')).log_in()
-    # b_p = BarChekinParser(selenium_driver,['https://untappd.com/v/redrum-bar/2498830/activity','https://untappd.com/v/socle-craft-bar/8750585/activity'],to_df=True).parse_bar_chekin()
-    # print(b_p.df)
-    # TODO convert to property? all internal methods
-    # TODO to test file
-    # drv = DriverSetup(headless=False).selenium_driver
-    # b_m = BarsMenu(drv, ['https://untappd.com/v/redrum-bar/2498830', 'https://untappd.com/v/socle-craft-bar/8750585'],to_df=True).parse_bars_menu()
-
