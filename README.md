@@ -3,7 +3,7 @@ Parser written for gathering data from Untappd, it contain methods to get inform
 ![image](github_readme_header.png)
 
 ## Motivation
-Instrument to conduct analysis of customers preferences in determined area. Can help get statistical data on beer type, form of serving, price, avaliability, etc. 
+Instrument to conduct analysis of customers preferences in determined area. Can help get statistical data on beer type, form of serving, price, avaliability, consumption geodata, etc. 
 
 ## Getting Started
 You need Google Chrome installed on your machine, then selenium can atomatically get compatible headless version of it. Everything else contained in requirements.txt.
