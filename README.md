@@ -15,18 +15,28 @@ Logging in via Faceboo; can be used to collect every data from pre-created list 
 
 ## Example
 
-At first you should create instance of SeleniumWebDriver:
+At first you should create instance of SeleniumWebDriver via **DriverSetup**:
 
-    # initiate driver
     drv = DriverSetup(headless=False).selenium_driver
 
-Then you need to login, it contains two steps: logging in into Facebook and then loogin in into Untapped via Facebook. That can do LoginProcess:
+Then you need to login, it contains two steps: logging in into Facebook and then loogin in into Untapped via Facebook. That can do **LoginProcess**:
 
     LoginProcess(drv, 'source', 'log_pass_dummy').log_in()
     
-And finally you can start collecting data, for example, if you want to get menu of some venue:
+And finally you can start collecting data, for example, if you want to get menu of some venue.
+Create list of links of bars, menus of which to be parsed:
     
     bars_to_get_menu = ['https://untappd.com/v/redrum-bar/2498830', 'https://untappd.com/v/socle-craft-bar/8750585']
-    bars_menu = BarsMenu(drv, bars_to_get_menu, to_df=True, to_csv=True).parse_bars_menu()
+ 
+Then you can create instance of **BarsMenu** that contains methods to get data as well as to store it:
 
-Where as a first parameter you should put instance of SeleniumWebDriver, then list of links of bars, menus of which to be parsed and two optional parametrs: contain collected data as pandas.DataFrame and saving it to .csv format.
+    bars_menu = BarsMenu(drv, bars_to_get_menu, to_df=True, to_csv=True)
+
+And finally, you can call built-in method **.parse_bars_menu** and start getting data:
+
+    bars_menu.parse_bars_menu()
+
+**to_df** - optional argument to store gathered data as pandas.DataFrame
+**to_csv** - optional argument to export collected data to .csv file
+
+That's it! All other classes have the same interface.
