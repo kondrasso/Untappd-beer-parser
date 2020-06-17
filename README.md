@@ -35,6 +35,7 @@ Then you can create instance of **BarsMenu** that contains methods to get data a
 
 **to_df** - optional argument to store gathered data as pandas.DataFrame  
 **to_csv** - optional argument to export collected data to .csv file  
+
 And finally, you can call built-in method **.parse_bars_menu** and start getting data:
 
     bars_menu.parse_bars_menu()
