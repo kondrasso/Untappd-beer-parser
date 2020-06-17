@@ -1,5 +1,6 @@
 # Untappd-beer-parser
 Parser written for gathering data from Untappd, it contain methods to get information from any part of the website. With help of it dataset of 75 thousands chek-ins was gathered, which you can see and use. Hosted on [Kaggle](https://www.kaggle.com/kondrasso/saint-petersburg-craft-beer).
+
 ![image](github_readme_header.png)
 
 ## Motivation
@@ -14,6 +15,8 @@ Logging in via Faceboo; can be used to collect every data from pre-created list 
 
 ## Example
 
+At first you should create instance of SeleniumWebDriver:
 
-
-
+def foo():
+    if not bar:
+        return True
