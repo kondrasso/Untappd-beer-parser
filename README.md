@@ -1,6 +1,5 @@
-
-
 # Untappd-beer-parser
+![image](github_readme_header.png)
 Parser written for gathering data from Untappd, it contain methods to get information from any part of the website. With help of it dataset of 75 thousands chek-ins was gathered, which you can see and use. Hosted on [Kaggle](https://www.kaggle.com/kondrasso/saint-petersburg-craft-beer). 
 
 ## Motivation
