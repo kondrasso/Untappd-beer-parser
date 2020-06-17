@@ -17,6 +17,6 @@ Logging in via Faceboo; can be used to collect every data from pre-created list 
 
 At first you should create instance of SeleniumWebDriver:
 
-def foo():
-    if not bar:
-        return True
+    def foo():
+        if not bar:
+            return True
